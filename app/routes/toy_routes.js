@@ -45,4 +45,28 @@ router.post('/toys/:petId', (req, res, next) => {
 
 // DELETE -> delete a toy
 // DELETE /toys/<pet_id>/<toy_id>
+router.delete('./toys/:petId/:toyId', requireToken, (req, res, next) => {
+    //saving both ids to variables for easy ref later
+    const toyId = req.params.toyId
+    const petId = req.params.petId
+    //find pet in db
+    Pet.findById(petId)
+    //if pet is not found throw 404
+        .then(handle404)
+        .then(pet => {
+            //get the specific subdocument by its id
+            const theToy = pet.toys.id(toyId)
+            //require that the deleter is the owner of the pet
+            requireOwnership(req, pet)
+            //call remove on the toy we got on the line above require Ownership
+            theToy.remove()
+            //return the saved pet
+            return pet.save()
+        })
+        //send 204 no content
+        .then(() => res.sendStatus(204))
+        .catch(next)
+})
+
+
 module.exports = router
